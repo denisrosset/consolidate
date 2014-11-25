@@ -9,7 +9,7 @@ sealed trait Merged[+A] {
   def map[B](f: A => B): Merged[B]
   def flatMap[B](f: A => Merged[B]): Merged[B]
   def log: MLog
-  def check(error: A => Boolean, message: String): Merged[A] =
+  def failOn(error: A => Boolean, message: String): Merged[A] =
     if (error(get)) MFail(get, log ++ MLog(Map(Nil -> message))) else this
 }
 
