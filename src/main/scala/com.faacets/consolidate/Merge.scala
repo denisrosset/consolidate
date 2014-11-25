@@ -1,6 +1,5 @@
 package com.faacets
 package consolidate
-package algebra
 
 trait Merge[A] {
   def merge(current: A, other: A): Merged[A]

@@ -2,7 +2,6 @@ package com.faacets
 package consolidate
 package std
 
-import algebra._
 import syntax.merge._
 
 class MapMerge[K, V](implicit V: Merge[V]) extends Merge[Map[K, V]] {

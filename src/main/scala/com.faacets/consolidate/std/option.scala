@@ -2,7 +2,6 @@ package com.faacets
 package consolidate
 package std
 
-import algebra._
 import syntax.merge._
 
 class OptionMerge[A: Merge] extends Merge[Option[A]] {

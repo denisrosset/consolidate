@@ -6,8 +6,6 @@ import scala.language.experimental.macros
 
 import machinist.{DefaultOps => Ops}
 
-import algebra._
-
 final class MergeOps[A](lhs: A)(implicit ev: Merge[A]) {
   def merge(rhs: A): Merged[A] = macro Ops.binop[A, Merged[A]]
 }

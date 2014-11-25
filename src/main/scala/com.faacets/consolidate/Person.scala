@@ -3,7 +3,6 @@ package consolidate
 
 import syntax.all._
 import std.any._
-import algebra._
 
 case class Person(name: String, age: Option[Int], retired: Option[Boolean])
 
