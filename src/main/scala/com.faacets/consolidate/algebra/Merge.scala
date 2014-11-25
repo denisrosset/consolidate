@@ -2,8 +2,6 @@ package com.faacets
 package consolidate
 package algebra
 
-import spire.algebra.Eq
-
 trait Merge[A] {
   def merge(current: A, other: A): Merged[A]
 }

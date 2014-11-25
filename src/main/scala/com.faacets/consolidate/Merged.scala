@@ -1,8 +1,6 @@
 package com.faacets
 package consolidate
 
-import spire.algebra.Eq
-
 sealed trait Merged[+A] {
   def get: A
   def withPath(pathElement: String): Merged[A]
