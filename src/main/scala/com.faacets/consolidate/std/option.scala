@@ -4,7 +4,7 @@ package std
 
 import syntax.merge._
 
-class OptionMerge[A: Merge] extends Merge[Option[A]] {
+final class OptionMerge[A: Merge] extends Merge[Option[A]] {
   def merge(current: Option[A], other: Option[A]) = (current, other) match {
     case (_, None) => MSame(current)
     case (None, Some(o)) => MNew(other, MLog(Map(Nil -> s"new value = $o")))

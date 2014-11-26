@@ -4,7 +4,7 @@ package std
 
 import syntax.merge._
 
-class MapMerge[K, V](implicit V: Merge[V]) extends Merge[Map[K, V]] {
+final class MapMerge[K, V](implicit V: Merge[V]) extends Merge[Map[K, V]] {
   def merge(current: Map[K, V], other: Map[K, V]): Merged[Map[K, V]] = {
     ((MSame(current): Merged[Map[K, V]]) /: other) {
       case (merged, (otherKey, otherValue)) =>
