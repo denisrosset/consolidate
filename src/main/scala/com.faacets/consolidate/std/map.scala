@@ -5,6 +5,7 @@ package std
 import syntax.merge._
 
 final class MapMerge[K, V](implicit V: Merge[V]) extends Merge[Map[K, V]] {
+
   def merge(current: Map[K, V], other: Map[K, V]): Merged[Map[K, V]] = {
     ((MSame(current): Merged[Map[K, V]]) /: other) {
       case (merged, (otherKey, otherValue)) =>
@@ -18,8 +19,11 @@ final class MapMerge[K, V](implicit V: Merge[V]) extends Merge[Map[K, V]] {
         } yield accMap + keyValue
     }
   }
+
 }
 
 trait MapInstances {
+
   implicit def MapMerge[K, V: Merge]: MapMerge[K, V] = new MapMerge[K, V]
+  
 }
