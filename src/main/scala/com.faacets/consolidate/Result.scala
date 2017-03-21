@@ -2,7 +2,7 @@ package com.faacets
 package consolidate
 
 import cats.Apply
-import cats.data.NonEmptyList
+import cats.data.{NonEmptyList => NEL}
 
 import cats.syntax.semigroup._
 
@@ -10,10 +10,34 @@ sealed trait Result[+A] { self =>
 
   import Result.{Same, Updated, Failed}
 
+  def isSame: Boolean = self match {
+    case _: Same[_] => true
+    case _: Updated[_] => false
+    case _: Failed => false
+  }
+
+  def isUpdated: Boolean = self match {
+    case _: Updated[_] => true
+    case _: Same[_] => false
+    case _: Failed => false
+  }
+
+  def hasFailed: Boolean = self match {
+    case _: Failed => true
+    case _: Updated[_] => false
+    case _: Same[_] => false
+  }
+
+  def value: Option[A] = self match {
+    case Same(a) => Some(a)
+    case Updated(a, _) => Some(a)
+    case _: Failed => None
+  }
+
   def fold[X](
     same: A => X,
-    updated: (A, NonEmptyList[(Path, String)]) => X,
-    failed: NonEmptyList[(Path, String)] => X
+    updated: (A, NEL[(Path, String)]) => X,
+    failed: NEL[(Path, String)] => X
   ): X = self match {
     case Same(value) => same(value)
     case Updated(newValue, updates) => updated(newValue, updates)
@@ -26,21 +50,33 @@ sealed trait Result[+A] { self =>
     case failed: Failed => failed
   }
 
+  def check(path: Path, f: A => List[String]): Result[A] = self match {
+    case Same(value) => NEL.fromList(f(value)) match {
+      case None => self
+      case Some(errors) => throw new Exception("Should not happen: base element is inconsistent, with errors: " + errors.toString)
+    }
+    case Updated(newValue, updates) => NEL.fromList(f(newValue)) match {
+      case None => self
+      case Some(errors) => Failed(errors.map(error => (path, error)))
+    }
+    case failed: Failed => failed
+  }
+
 }
 
 object Result {
 
-  def same[A](value: A): Result[A] = Same(value)
+  def same[A](baseValue: A): Result[A] = Same(baseValue)
 
-  def updated[A](newValue: A, updates: NonEmptyList[(Path, String)]): Result[A] = Updated(newValue, updates)
+  def updated[A](newValue: A, updates: NEL[(Path, String)]): Result[A] = Updated(newValue, updates)
 
-  def failed[A](errors: NonEmptyList[(Path, String)]): Result[A] = Failed(errors)
+  def failed[A](errors: NEL[(Path, String)]): Result[A] = Failed(errors)
 
-  private[consolidate] case class Same[+A](value: A) extends Result[A]
+  private[consolidate] case class Same[+A](baseValue: A) extends Result[A]
 
-  private[consolidate] case class Updated[+A](newValue: A, updatedPaths: NonEmptyList[(Path, String)]) extends Result[A]
+  private[consolidate] case class Updated[+A](newValue: A, updatedPaths: NEL[(Path, String)]) extends Result[A]
 
-  private[consolidate] case class Failed(errors: NonEmptyList[(Path, String)]) extends Result[Nothing]
+  private[consolidate] case class Failed(errors: NEL[(Path, String)]) extends Result[Nothing]
 
   implicit val consolidateApplyForResult: Apply[Result] = new Apply[Result] {
 

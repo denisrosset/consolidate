@@ -2,7 +2,9 @@ Consolidate Scala library
 =========================
 
 This library offers consolidate of immutable data, through the `Merge[A]` typeclass and
-the `Merged[A]` result.
+the `Result[A]` result type.
+
+### Stuff below is outdated
 
 After merging a current piece of data (`lhs`) with a new piece `rhs` using `lhs merge rhs`,
 the result is:
