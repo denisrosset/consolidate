@@ -4,6 +4,9 @@ package consolidate
 import syntax.all._
 import std.any._
 
+import org.scalatest.{FunSuite, Matchers}
+
+/*
 case class Person(name: String, age: Option[Int], retired: Option[Boolean])
 
 object Person {
@@ -26,3 +29,16 @@ object Person {
   }
 
 }
+
+class PersonSuite extends FunSuite with Matchers {
+
+  test("merge") {
+    val a = Person("Jack", None, None)
+    val b = Person("Jack", Some(40), None)
+    (a merge a) shouldBe MSame(a)
+    (a merge b) shouldBe MNew(b)
+  }
+
+}
+
+ */
