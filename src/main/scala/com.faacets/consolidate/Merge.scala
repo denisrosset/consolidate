@@ -64,25 +64,25 @@ object Merge {
 
   }
 
-  /*
+  final class MapMerge[V](implicit V: Merge[V]) extends Merge[Map[String, V]] {
 
-final class MapMerge[K, V](implicit V: Merge[V]) extends Merge[Map[K, V]] {
+    import cats.syntax.all._
 
-  def merge(base: Map[K, V], other: Map[K, V]): Merged[Map[K, V]] = {
-    ((MSame(base): Merged[Map[K, V]]) /: other) {
-      case (merged, (otherKey, otherValue)) =>
-        val resKeyValue: Merged[(K, V)] = base get otherKey match {
-          case None => MNew(otherKey -> otherValue, MLog(Map(List(otherKey.toString) -> s"new value = $otherValue")))
-          case Some(baseValue) => (baseValue merge otherValue).map(otherKey -> _).withPath(otherKey.toString)
-        }
-        for {
-          accMap <- merged
-          keyValue <- resKeyValue
-        } yield accMap + keyValue
+    import Result.{same, updated, failed}
+
+    def merge(base: Map[String, V], other: Map[String, V]): Result[Map[String, V]] = {
+      ((same(base): Result[Map[String, V]]) /: other) {
+        case (merged, (otherKey, otherValue)) =>
+          val res: Result[(String, V)] = base get otherKey match {
+            case None => updated(otherKey -> otherValue, NEL.of(Path.empty -> s"new value for key $otherKey = $otherValue"))
+            case Some(baseValue) => V.merge(baseValue, otherValue).map(otherKey -> _)
+          }
+          (merged |@| res.in(otherKey)).map { case (accMap, kv) => accMap + kv }
+      }
     }
+
   }
 
-}
+  implicit def mapMerge[V:Merge]: Merge[Map[String, V]] = new MapMerge
 
-   */
 }

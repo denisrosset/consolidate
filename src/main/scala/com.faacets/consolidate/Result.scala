@@ -113,28 +113,6 @@ object Result {
 
   implicit val instance: ApplicativeError[Result, NEL[(Path, String)]] = new ApplicativeError[Result, NEL[(Path, String)]] {
 
-/*    def flatMap[A, B](fa: Result[A])(f: A => Result[B]): Result[B] = fa match {
-      case Same(a) => f(a)
-      case Updated(a, updates) => f(a) match {
-        case Same(b) => Updated(b, updates)
-        case Updated(b, updates1) => Updated(b, updates ++ updates1.toList)
-        case f: Failed => f
-      }
-      case f: Failed => f
-    }
-
-    def tailRecM[A, B](a: A)(f: A => Result[Either[A, B]]): Result[B] = {
-      def valid(b: B, updates: List[(Path, String)]): Result[B] = NEL.fromList(updates).fold(same(b))(updated(b, _))
-      @tailrec def rec(a1: A, updates: List[(Path, String)]): Result[B] = f(a1) match {
-        case Same(Left(a2)) => rec(a2, updates)
-        case Same(Right(b)) => valid(b, updates)
-        case Updated(Left(a2), updates1) => rec(a2, updates ++ updates1.toList)
-        case Updated(Right(b), updates1) => valid(b, updates ++ updates1.toList)
-        case f: Failed => f
-      }
-      rec(a, Nil)
-    }*/
-
     def raiseError[A](e: NEL[(Path, String)]): Result[A] = Failed(e)
 
     def handleErrorWith[A](fa: Result[A])(f: NEL[(Path, String)] => Result[A]): Result[A] = fa match {

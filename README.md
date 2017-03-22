@@ -9,26 +9,16 @@ the `Result[A]` result type.
 After merging a current piece of data (`lhs`) with a new piece `rhs` using `lhs merge rhs`,
 the result is:
 
-- `MSame(lhs)` if `rhs` does not offer additional information,
-- `MNew(m)` if `rhs` has new information, with `m` the merged result,
-- `MFail(log)` if `lhs` and `rhs` are incompatible, with `log: MLog` a list of
-  encountered errors.
+- `Same(lhs)` if `rhs` does not offer additional information,
+- `Update(m, updates)` if `rhs` has new information, with `m` the merged result and `updates` is a
+  non-empty list of changes,
+- `Failed(errors)` if `lhs` and `rhs` are incompatible, and `errors` is a non-empty list of errors.
 
-`Merge[A]` is a monad, with the following operations:
-
-- `unit(a: A) = MSame(a)`,
-- `map[A,B](m: Merged[A])(f: A => B): Merged[B]` with
-  `map(MSame(a))(f) = MSame(f(a))`
-  `map(MNew(a))(f) = MNew(f(a))`
-  `map(MFail(log))(f) = MFail(log)`
-- `flatMap[A,B](m: Merged[A])(f: A => Merged[B]): Merged[B]` with
-  `flatMap(MSame(a))(f) = f(a)`
-  `flatMap(MNew(a))(f) = MNew(f(a)) if f(a) == MSame(a) or MNew(a)`
-  `flatMap(MFail(log))(f) = MFail(log)`
+`Merge[A]` is an `ApplicativeError`, which accumulates updates and errors. 
 
 The default Merge typeclass implementation is `Merge.fromEquals`, that compares `lhs`
-and `rhs` and returns `MSame(lhs)` when `lhs == rhs` and `MFail(log)` otherwise.
+and `rhs` and returns `Same(lhs)` when `lhs == rhs` and `Failed(errors)` otherwise.
 
-Implementation are provided for `Map` (by completing the map entries, and merging the
+Implementation are provided for `Map[String, V]` (by completing the map entries, and merging the
 values when both `lhs` and `rhs` provide a key), `Option` (by taking the `Some` entry,
 and merging both `Some` when applicable), `Set` (by taking the union of sets).
