@@ -8,7 +8,7 @@ import org.typelevel.discipline.scalatest.Discipline
 
 import cats.instances.all._
 import cats.laws.discipline.arbitrary._
-import cats.laws.discipline.MonadErrorTests
+import cats.laws.discipline.ApplicativeErrorTests
 import cats.data.{NonEmptyList => NEL}
 
 class ResultSuite extends FunSuite with Matchers with Discipline {
@@ -28,6 +28,6 @@ class ResultSuite extends FunSuite with Matchers with Discipline {
 
   implicit def cogenError: Cogen[Path] = Cogen(_.hashCode)
 
-  checkAll("Result", MonadErrorTests[Result, Result.Errors].monadError[Int, String, Long])
+  checkAll("Result", ApplicativeErrorTests[Result, Result.Errors].applicativeError[Int, String, Long])
 
 }

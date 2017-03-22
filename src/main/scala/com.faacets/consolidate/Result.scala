@@ -2,7 +2,7 @@ package com.faacets.consolidate
 
 import scala.annotation.tailrec
 
-import cats.{Eq, MonadError}
+import cats.{Eq, ApplicativeError}
 import cats.data.{Validated, ValidatedNel, NonEmptyList => NEL}
 
 import cats.syntax.eq._
@@ -111,9 +111,9 @@ object Result {
 
   type Errors = NEL[(Path, String)]
 
-  implicit val instance: MonadError[Result, NEL[(Path, String)]] = new MonadError[Result, NEL[(Path, String)]] {
+  implicit val instance: ApplicativeError[Result, NEL[(Path, String)]] = new ApplicativeError[Result, NEL[(Path, String)]] {
 
-    def flatMap[A, B](fa: Result[A])(f: A => Result[B]): Result[B] = fa match {
+/*    def flatMap[A, B](fa: Result[A])(f: A => Result[B]): Result[B] = fa match {
       case Same(a) => f(a)
       case Updated(a, updates) => f(a) match {
         case Same(b) => Updated(b, updates)
@@ -133,7 +133,7 @@ object Result {
         case f: Failed => f
       }
       rec(a, Nil)
-    }
+    }*/
 
     def raiseError[A](e: NEL[(Path, String)]): Result[A] = Failed(e)
 
