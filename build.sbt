@@ -24,5 +24,5 @@ libraryDependencies ++= Seq(
   "com.chuusai" %% "shapeless" % shapelessVersion,
   "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test",
   "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
-  "org.typelevel" %%% "discipline" % disciplineVersion % "test"
+  "org.typelevel" %% "discipline" % disciplineVersion % "test"
 )
