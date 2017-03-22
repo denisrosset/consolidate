@@ -1,5 +1,4 @@
-package com.faacets
-package consolidate
+package com.faacets.consolidate
 
 import cats.{Eq, Show}
 import cats.data.{NonEmptyList => NEL}
