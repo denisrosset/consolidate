@@ -19,8 +19,11 @@ object Person {
 
     import Validated.{invalidNel, valid}
 
-    def validName(name: String): ValidatedNel[String, String] = if (name.isEmpty) invalidNel("Name cannot be empty") else valid(name)
-    def validAge(age: Option[Int]): ValidatedNel[String, Option[Int]] = age.fold(valid(age): ValidatedNel[String, Option[Int]])(a => if (a < 0) invalidNel("Age cannot be negative") else valid(age))
+    def validName(name: String) = if (name.isEmpty) invalidNel("Name cannot be empty") else valid(name)
+    def validAge(age: Option[Int]) = age match {
+      case Some(a) if a < 0 => invalidNel("Age cannot be negative")
+      case _ => valid(age)
+    }
 
     (validName(name) |@| validAge(age) |@| valid(retired)).map(Person.apply)
 
@@ -32,22 +35,7 @@ object Person {
 
   implicit def BooleanMerge = Merge.fromEquals[Boolean]
 
-  def error1[A, B](a: A): ValidatedNel[String, B] = Validated.invalidNel("Error")
-
   implicit val PersonMerge: Merge[Person] = Auto.derive[Person].validated((Person.validated _).tupled)
-
-//  lazy val PersonMerge: Merge[Person] = Auto[Person]
-
-/*  implicit object PersonMerge extends Merge[Person] {
-
-    def merge(current: Person, other: Person) =
-      (
-        current.name.merge(other.name).in("name") |@|
-          current.age.merge(other.age).in("age") |@|
-          current.retired.merge(other.retired).in("retired")
-      ).map(Person(_,_,_))
-
-  }*/
 
 }
 
