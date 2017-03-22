@@ -8,48 +8,58 @@ import cats.syntax.show._
 
 trait Merge[A] {
 
-  def merge(path: Path, current: A, other: A): Result[A]
+  def merge(base: A, other: A): Result[A]
 
 }
 
 object Merge {
 
+  object syntax {
+
+    implicit class MergeOps[A](val lhs: A) extends AnyVal {
+
+      def merge(rhs: A)(implicit ev: Merge[A]): Result[A] = ev.merge(lhs, rhs)
+
+    }
+
+  }
+
   final def apply[A](implicit ev: Merge[A]): Merge[A] = ev
 
   private[consolidate] class EqualsMerge[A] extends Merge[A] {
-    def merge(path: Path, current: A, other: A) =
-      if (current == other) Result.same(current)
-      else Result.failed(NEL.of(path -> s"$current != $other"))
+    def merge(base: A, other: A) =
+      if (base == other) Result.same(base)
+      else Result.failed(NEL.of(Path.empty -> s"$base != $other"))
   }
 
   private[consolidate] class EqMerge[A:Eq:Show] extends Merge[A] {
-    def merge(path: Path, current: A, other: A) =
-      if (current === other) Result.same(current)
-      else Result.failed(NEL.of(path -> s"$current != $other"))
+    def merge(base: A, other: A) =
+      if (base === other) Result.same(base)
+      else Result.failed(NEL.of(Path.empty -> s"$base != $other"))
   }
 
   def fromEquals[A]: Merge[A] = new EqualsMerge[A]
 
   def fromEq[A:Eq:Show]: Merge[A] = new EqMerge[A]
 
-  implicit def OptionMerge[A:Merge]: Merge[Option[A]] = new Merge[Option[A]] {
+  implicit def optionMerge[A:Merge]: Merge[Option[A]] = new Merge[Option[A]] {
 
-    def merge(path: Path, current: Option[A], other: Option[A]) = (current, other) match {
-      case (_, None) => Result.same(current)
-      case (None, someOther: Some[A]) => Result.updated(someOther, NEL.of((path -> s"new value = $other")))
-      case (Some(current), Some(other)) => Merge[A].merge(path, current, other).map(Some(_))
+    def merge(base: Option[A], other: Option[A]) = (base, other) match {
+      case (_, None) => Result.same(base)
+      case (None, someOther: Some[A]) => Result.updated(someOther, NEL.of((Path.empty -> s"new value = $other")))
+      case (Some(base), Some(other)) => Merge[A].merge(base, other).map(Some(_))
     }
 
   }
 
   implicit def setMerge[A] = new Merge[Set[A]] {
 
-    def merge(path: Path, current: Set[A], other: Set[A]) = {
-      val newElements = other -- current
+    def merge(base: Set[A], other: Set[A]) = {
+      val newElements = other -- base
       if (newElements.isEmpty)
-        Result.same(current)
+        Result.same(base)
       else
-        Result.updated(current ++ newElements, NEL.of(path -> s"new elements = $newElements"))
+        Result.updated(base ++ newElements, NEL.of(Path.empty -> s"new elements = $newElements"))
     }
 
   }
@@ -58,12 +68,12 @@ object Merge {
 
 final class MapMerge[K, V](implicit V: Merge[V]) extends Merge[Map[K, V]] {
 
-  def merge(current: Map[K, V], other: Map[K, V]): Merged[Map[K, V]] = {
-    ((MSame(current): Merged[Map[K, V]]) /: other) {
+  def merge(base: Map[K, V], other: Map[K, V]): Merged[Map[K, V]] = {
+    ((MSame(base): Merged[Map[K, V]]) /: other) {
       case (merged, (otherKey, otherValue)) =>
-        val resKeyValue: Merged[(K, V)] = current get otherKey match {
+        val resKeyValue: Merged[(K, V)] = base get otherKey match {
           case None => MNew(otherKey -> otherValue, MLog(Map(List(otherKey.toString) -> s"new value = $otherValue")))
-          case Some(currentValue) => (currentValue merge otherValue).map(otherKey -> _).withPath(otherKey.toString)
+          case Some(baseValue) => (baseValue merge otherValue).map(otherKey -> _).withPath(otherKey.toString)
         }
         for {
           accMap <- merged

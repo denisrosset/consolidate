@@ -1,13 +1,25 @@
 package com.faacets.consolidate
 
-final case class Path(val revElements: List[String]) extends AnyVal {
+import cats.Eq
+import cats.instances.all._
+import cats.syntax.eq._
 
-  override def toString = revElements.reverse.mkString(".")
+final case class Path(val elements: List[String]) extends AnyVal {
+
+  def ::(leftElement: String): Path = Path(leftElement :: elements)
+
+  override def toString = elements.mkString(".")
 
 }
 
 object Path {
 
-  val root = new Path(Nil)
+  val empty = new Path(Nil)
+
+  implicit val eqPath: Eq[Path] = new Eq[Path] {
+
+    def eqv(a: Path, b: Path) = a.elements === b.elements
+
+  }
 
 }

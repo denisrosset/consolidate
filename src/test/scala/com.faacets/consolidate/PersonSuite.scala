@@ -1,15 +1,18 @@
 package com.faacets
 package consolidate
 
-import syntax.all._
-import std.any._
+import org.scalatest.{FunSuite, Inside, Matchers}
 
-import org.scalatest.{FunSuite, Matchers}
+import Merge.syntax._
 
-/*
+import Result.{Same, Updated, Failed}
+
+import cats.syntax.all._
+
 case class Person(name: String, age: Option[Int], retired: Option[Boolean])
 
 object Person {
+
 
   implicit def StringMerge = Merge.fromEquals[String]
 
@@ -17,28 +20,31 @@ object Person {
 
   implicit def BooleanMerge = Merge.fromEquals[Boolean]
 
-  implicit object PersonMerge extends Merge[Person] {
+  implicit val PersonMerge: Merge[Person] = Auto.derive[Person].noValidation
+
+//  lazy val PersonMerge: Merge[Person] = Auto[Person]
+
+/*  implicit object PersonMerge extends Merge[Person] {
 
     def merge(current: Person, other: Person) =
-      for {
-        name <- current.name.merge(other.name).withPath("name")
-        age <- current.age.merge(other.age).withPath("age")
-        retired <- current.retired.merge(other.retired).withPath("retired")
-      } yield Person(name, age, retired)
+      (
+        current.name.merge(other.name).in("name") |@|
+          current.age.merge(other.age).in("age") |@|
+          current.retired.merge(other.retired).in("retired")
+      ).map(Person(_,_,_))
 
-  }
+  }*/
 
 }
 
-class PersonSuite extends FunSuite with Matchers {
+class PersonSuite extends FunSuite with Matchers with Inside {
 
-  test("merge") {
+  test("Merge syntax and results") {
     val a = Person("Jack", None, None)
     val b = Person("Jack", Some(40), None)
-    (a merge a) shouldBe MSame(a)
-    (a merge b) shouldBe MNew(b)
+    (a merge a) shouldBe Same(a)
+    inside(a merge b) { case Updated(c, _) => c shouldBe b }
+    (b merge a) shouldBe Same(b)
   }
 
 }
-
- */

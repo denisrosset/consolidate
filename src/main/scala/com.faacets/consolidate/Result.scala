@@ -1,13 +1,30 @@
 package com.faacets.consolidate
 
-import cats.Apply
-import cats.data.{NonEmptyList => NEL}
+import scala.annotation.tailrec
 
+import cats.{Eq, MonadError}
+import cats.data.{Validated, ValidatedNel, NonEmptyList => NEL}
+
+import cats.syntax.eq._
 import cats.syntax.semigroup._
 
 sealed trait Result[+A] { self =>
 
   import Result.{Same, Updated, Failed}
+
+  def in(element: String): Result[A]
+
+  def validate[B](f: A => ValidatedNel[String, B]): Result[B] = self match {
+    case Same(a) => f(a) match {
+      case Validated.Valid(b) => Same(b)
+      case Validated.Invalid(errors) => Failed(errors.map(err => (Path.empty, err)))
+    }
+    case Updated(a, updates) => f(a) match {
+      case Validated.Valid(b) => Updated(b, updates)
+      case Validated.Invalid(errors) => Failed(errors.map(err => (Path.empty, err)))
+    }
+    case failed: Failed => failed
+  }
 
   def isSame: Boolean = self match {
     case _: Same[_] => true
@@ -71,21 +88,70 @@ object Result {
 
   def failed[A](errors: NEL[(Path, String)]): Result[A] = Failed(errors)
 
-  private[consolidate] case class Same[+A](baseValue: A) extends Result[A]
+  protected def appendPath(nel: NEL[(Path, String)], element: String): NEL[(Path, String)] =
+    nel.map { case (path, string) => (element :: path, string) }
 
-  private[consolidate] case class Updated[+A](newValue: A, updatedPaths: NEL[(Path, String)]) extends Result[A]
+  case class Same[+A](baseValue: A) extends Result[A] {
 
-  private[consolidate] case class Failed(errors: NEL[(Path, String)]) extends Result[Nothing]
+    def in(element: String) = this
 
-  implicit val consolidateApplyForResult: Apply[Result] = new Apply[Result] {
+  }
 
-    def map[A, B](fa: Result[A])(f: A => B): Result[B] = fa match {
+  case class Updated[+A](newValue: A, updates: NEL[(Path, String)]) extends Result[A] {
+
+    def in(element: String) = Updated(newValue, appendPath(updates, element))
+
+  }
+
+  case class Failed(errors: NEL[(Path, String)]) extends Result[Nothing] {
+
+    def in(element: String) = Failed(appendPath(errors, element))
+
+  }
+
+  type Errors = NEL[(Path, String)]
+
+  implicit val instance: MonadError[Result, NEL[(Path, String)]] = new MonadError[Result, NEL[(Path, String)]] {
+
+    def flatMap[A, B](fa: Result[A])(f: A => Result[B]): Result[B] = fa match {
+      case Same(a) => f(a)
+      case Updated(a, updates) => f(a) match {
+        case Same(b) => Updated(b, updates)
+        case Updated(b, updates1) => Updated(b, updates ++ updates1.toList)
+        case f: Failed => f
+      }
+      case f: Failed => f
+    }
+
+    def tailRecM[A, B](a: A)(f: A => Result[Either[A, B]]): Result[B] = {
+      def valid(b: B, updates: List[(Path, String)]): Result[B] = NEL.fromList(updates).fold(same(b))(updated(b, _))
+      @tailrec def rec(a1: A, updates: List[(Path, String)]): Result[B] = f(a1) match {
+        case Same(Left(a2)) => rec(a2, updates)
+        case Same(Right(b)) => valid(b, updates)
+        case Updated(Left(a2), updates1) => rec(a2, updates ++ updates1.toList)
+        case Updated(Right(b), updates1) => valid(b, updates ++ updates1.toList)
+        case f: Failed => f
+      }
+      rec(a, Nil)
+    }
+
+    def raiseError[A](e: NEL[(Path, String)]): Result[A] = Failed(e)
+
+    def handleErrorWith[A](fa: Result[A])(f: NEL[(Path, String)] => Result[A]): Result[A] = fa match {
+      case r: Same[A] => r
+      case r: Updated[A] => r
+      case Failed(errors) => f(errors)
+    }          
+
+    def pure[A](a: A): Result[A] = Same(a)
+
+    override def map[A, B](fa: Result[A])(f: A => B): Result[B] = fa match {
       case Same(a) => Same(f(a))
       case Updated(a, paths) => Updated(f(a), paths)
       case Failed(errors) => Failed(errors)
     }
 
-    def ap[A, B](ff: Result[A => B])(fa: Result[A]): Result[B] = (ff, fa) match {
+    override def ap[A, B](ff: Result[A => B])(fa: Result[A]): Result[B] = (ff, fa) match {
       case (Same(ff1), Same(fa1)) => Same(ff1(fa1))
       case (Same(ff1), Updated(fa1, paths)) => Updated(ff1(fa1), paths)
       case (Updated(ff1, paths), Same(fa1)) => Updated(ff1(fa1), paths)
@@ -93,6 +159,17 @@ object Result {
       case (Failed(errors1), Failed(errors2)) => Failed(errors1 |+| errors2)
       case (Failed(errors1), _) => Failed(errors1)
       case (_, Failed(errors2)) => Failed(errors2)
+    }
+
+  }
+
+  implicit def consolidateEqForResult[A:Eq]: Eq[Result[A]] = new Eq[Result[A]] {
+    import cats.instances.all._
+    def eqv(lhs: Result[A], rhs: Result[A]) = (lhs, rhs) match {
+      case (Same(a1), Same(a2)) => a1 === a2
+      case (Updated(a1, u1), Updated(a2, u2)) => a1 === a2 && u1 === u2
+      case (Failed(e1), Failed(e2)) => e1 === e2
+      case _ => false
     }
 
   }
