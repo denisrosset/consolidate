@@ -11,7 +11,7 @@ import Result.{Same, Updated, Failed}
 
 import cats.syntax.all._
 
-case class Person(name: String, age: Option[Int], retired: Option[Boolean])
+case class Person(name: String, age: Option[Int] = None, retired: Option[Boolean] = None)
 
 object Person {
 
@@ -47,6 +47,17 @@ class PersonSuite extends FunSuite with Matchers with Inside {
     (a merge a) shouldBe Same(a)
     inside(a merge b) { case Updated(c, _) => c shouldBe b }
     (b merge a) shouldBe Same(b)
+  }
+
+  test("Map merge") {
+    val a = Person("Jack", None, None)
+    val b = Person("Jack", Some(40), None)
+    inside(Map("a" -> a) merge Map("b" -> b)) {
+      case Updated(newMap, _) => newMap shouldBe Map("a" -> a, "b" -> b)
+    }
+    inside(Map("a" -> a) merge Map("a" -> b)) {
+      case Updated(newMap, _) => newMap shouldBe Map("a" -> b)
+    }
   }
 
 }
