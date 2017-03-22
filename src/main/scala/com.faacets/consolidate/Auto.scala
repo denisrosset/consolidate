@@ -1,18 +1,44 @@
 package com.faacets.consolidate
 
-import cats.data.{NonEmptyList => NEL}
+import cats.data.{NonEmptyList => NEL, Validated, ValidatedNel}
 import cats.syntax.all._
 import shapeless._
 
-import Result.{Same, Failed}
+import Result.{Same, Updated, Failed}
 
 object Auto extends LabelledTypeClassCompanion[Merge] {
 
   class Want[T](val u: Unit) {
+
     def noValidation[LKV](implicit
       lgen: LabelledGeneric.Aux[T, LKV],
       lwclkv: Lazy[Wrap[LKV]]
     ): Merge[T] = deriveInstance[T, LKV]
+
+    def validated[LKV, V, G](validate: G => ValidatedNel[String, T])(implicit
+      lgen: LabelledGeneric.Aux[T, LKV],
+      gen: Generic.Aux[G, V],
+      lwclkv: Lazy[Wrap.Aux[LKV, V]]
+    ): Merge[T] = new Merge[T] {
+
+      import lwclkv.value.{label, unlabel, unwrap}
+
+      protected def toFailed(errors: NEL[String]): Result[T] =
+        Failed(errors.map(err => (Path.empty, err)))
+
+      def merge(f1: T, f2: T) = unwrap.merge(unlabel(lgen.to(f1)), unlabel(lgen.to(f2))) match {
+        case Same(v) => validate(gen.from(v)) match {
+          case Validated.Valid(f) => Same(f)
+          case Validated.Invalid(errors) => toFailed(errors)
+        }
+        case Updated(v, updates) => validate(gen.from(v)) match {
+          case Validated.Valid(f) => Updated(f, updates)
+          case Validated.Invalid(errors) => toFailed(errors)
+        }
+        case failed: Failed => failed
+      }
+    }
+
   }
 
   def derive[T]: Want[T] = new Want[T]( () )

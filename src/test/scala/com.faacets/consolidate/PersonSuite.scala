@@ -3,6 +3,8 @@ package consolidate
 
 import org.scalatest.{FunSuite, Inside, Matchers}
 
+import cats.data.{NonEmptyList => NEL, Validated, ValidatedNel}
+
 import Merge.syntax._
 
 import Result.{Same, Updated, Failed}
@@ -13,6 +15,16 @@ case class Person(name: String, age: Option[Int], retired: Option[Boolean])
 
 object Person {
 
+  def validated(name: String, age: Option[Int], retired: Option[Boolean]): ValidatedNel[String, Person] = {
+
+    import Validated.{invalidNel, valid}
+
+    def validName(name: String): ValidatedNel[String, String] = if (name.isEmpty) invalidNel("Name cannot be empty") else valid(name)
+    def validAge(age: Option[Int]): ValidatedNel[String, Option[Int]] = age.fold(valid(age): ValidatedNel[String, Option[Int]])(a => if (a < 0) invalidNel("Age cannot be negative") else valid(age))
+
+    (validName(name) |@| validAge(age) |@| valid(retired)).map(Person.apply)
+
+  }
 
   implicit def StringMerge = Merge.fromEquals[String]
 
@@ -20,7 +32,9 @@ object Person {
 
   implicit def BooleanMerge = Merge.fromEquals[Boolean]
 
-  implicit val PersonMerge: Merge[Person] = Auto.derive[Person].noValidation
+  def error1[A, B](a: A): ValidatedNel[String, B] = Validated.invalidNel("Error")
+
+  implicit val PersonMerge: Merge[Person] = Auto.derive[Person].validated((Person.validated _).tupled)
 
 //  lazy val PersonMerge: Merge[Person] = Auto[Person]
 
