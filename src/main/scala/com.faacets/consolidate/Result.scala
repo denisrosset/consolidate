@@ -1,7 +1,5 @@
 package com.faacets.consolidate
 
-import scala.annotation.tailrec
-
 import cats.{Eq, ApplicativeError}
 import cats.data.{Validated, ValidatedNel, NonEmptyList => NEL}
 

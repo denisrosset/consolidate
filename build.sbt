@@ -11,7 +11,7 @@ organization := "com.faacets"
 
 scalaVersion := scalaVersions("2.12")
 
-scalacOptions ++= Seq("-unchecked", "-feature", "-deprecation")
+scalacOptions ++= Seq("-unchecked", "-feature", "-deprecation", "-language:implicitConversions")
 
 licenses := Seq("MIT" -> url("http://opensource.org/licenses/mit-license.php"))
 
