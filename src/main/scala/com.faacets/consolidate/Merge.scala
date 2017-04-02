@@ -4,7 +4,6 @@ import cats.{Eq, Show}
 import cats.data.{NonEmptyList => Nel}
 import cats.syntax.apply._
 import cats.syntax.eq._
-import cats.syntax.show._
 
 trait Merge[A] {
 
@@ -24,7 +23,7 @@ object Merge {
 
   }
 
-  def fromEq[A:Eq:Show]: Merge[A] = new Merge[A] {
+  def fromEq[A:Eq]: Merge[A] = new Merge[A] {
 
     def merge(base: A, other: A) =
       if (base === other) Result.same(base)
