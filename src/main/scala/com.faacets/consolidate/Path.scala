@@ -6,6 +6,8 @@ import cats.syntax.eq._
 
 final case class Path(val elements: List[String]) extends AnyVal {
 
+  def :::(leftElements: List[String]): Path = Path(leftElements ::: elements)
+
   def ::(leftElement: String): Path = Path(leftElement :: elements)
 
   override def toString = elements.mkString(".")

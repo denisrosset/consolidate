@@ -12,6 +12,8 @@ sealed trait Result[+A] { self =>
 
   def in(element: String): Result[A]
 
+  def in(elements: List[String]): Result[A]
+
   def validate[B](f: A => ValidatedNel[String, B]): Result[B] = self match {
     case Same(a) => f(a) match {
       case Validated.Valid(b) => Same(b)
@@ -89,9 +91,14 @@ object Result {
   protected def appendPath(nel: NEL[(Path, String)], element: String): NEL[(Path, String)] =
     nel.map { case (path, string) => (element :: path, string) }
 
+  protected def appendPath(nel: NEL[(Path, String)], elements: List[String]): NEL[(Path, String)] =
+    nel.map { case (path, string) => (elements ::: path, string) }
+
   case class Same[+A](baseValue: A) extends Result[A] {
 
     def in(element: String) = this
+
+    def in(elements: List[String]) = this
 
   }
 
@@ -99,11 +106,15 @@ object Result {
 
     def in(element: String) = Updated(newValue, appendPath(updates, element))
 
+    def in(elements: List[String]) = Updated(newValue, appendPath(updates, elements))
+
   }
 
   case class Failed(errors: NEL[(Path, String)]) extends Result[Nothing] {
 
     def in(element: String) = Failed(appendPath(errors, element))
+
+    def in(elements: List[String]) = Failed(appendPath(errors, elements))
 
   }
 
