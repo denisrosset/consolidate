@@ -20,7 +20,7 @@ homepage := Some(url("https://github.com/denisrosset/consolidate"))
 bintrayRepository := "maven"
 
 libraryDependencies ++= Seq(
-  "org.typelevel" %% "cats" % catsVersion,
+  "org.typelevel" %% "cats-core" % catsVersion,
   "com.chuusai" %% "shapeless" % shapelessVersion,
   "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test",
   "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
