@@ -22,6 +22,7 @@ bintrayRepository := "maven"
 libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-core" % catsVersion,
   "com.chuusai" %% "shapeless" % shapelessVersion,
+  "org.typelevel" %% "cats-laws" % catsVersion % "test",
   "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test",
   "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
   "org.typelevel" %% "discipline" % disciplineVersion % "test"

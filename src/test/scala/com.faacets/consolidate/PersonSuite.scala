@@ -4,7 +4,7 @@ package consolidate
 import org.scalatest.{FunSuite, Inside, Matchers}
 import cats.data.{Validated, ValidatedNel, NonEmptyList => NEL}
 import Result.{Failed, Same, Updated}
-import cats.syntax.all._
+import cats.implicits._
 
 import com.faacets.consolidate.implicits._
 
@@ -49,7 +49,7 @@ object PersonSuite {
         case _ => valid(age)
       }
 
-      (validName(name) |@| validAge(age) |@| valid(retired)).map(Person.apply)
+      (validName(name), validAge(age), valid(retired)).mapN(Person.apply)
 
     }
 

@@ -52,7 +52,7 @@ object Auto extends LabelledTypeClassCompanion[Merge] {
       def merge(ft1: F :: T, ft2: F :: T) = {
         val head = mh.merge(ft1.head, ft2.head).in(name)
         val tail = mt.merge(ft1.tail, ft2.tail)
-        (head |@| tail).map(_ :: _)
+        (head, tail).mapN(_ :: _)
       }
     }
 
