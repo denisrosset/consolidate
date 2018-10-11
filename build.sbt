@@ -1,4 +1,4 @@
-lazy val catsVersion = "1.1.0"
+lazy val catsVersion = "1.4.0"
 lazy val disciplineVersion = "0.8"
 lazy val scalaCheckVersion = "1.13.5"
 lazy val scalaTestVersion = "3.0.5"
