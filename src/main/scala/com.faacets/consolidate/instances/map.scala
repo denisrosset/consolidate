@@ -19,7 +19,7 @@ trait MapInstances {
             case None => updated(otherKey -> otherValue, Nel.of(Path.empty -> s"new value for key $otherKey = $otherValue"))
             case Some(baseValue) => Merge[V].merge(baseValue, otherValue).map(otherKey -> _)
           }
-          (merged |@| res.in(otherKey)).map { case (accMap, kv) => accMap + kv }
+          (merged, res.in(otherKey)).mapN { case (accMap, kv) => accMap + kv }
       }
     }
 
@@ -34,7 +34,7 @@ trait MapInstances {
             case None => updated(otherKey -> otherValue, Nel.of(Path.empty -> s"new value for key $otherKey = $otherValue"))
             case Some(baseValue) => Merge[V].merge(baseValue, otherValue).map(otherKey -> _)
           }
-          (merged |@| res.in(otherKey)).map { case (accMap, kv) => accMap  + kv }
+          (merged, res.in(otherKey)).mapN { case (accMap, kv) => accMap  + kv }
       }
     }
 
@@ -49,7 +49,7 @@ trait MapInstances {
             case None => updated(otherKey -> otherValue, Nel.of(Path.empty -> s"new value for key $otherKey = $otherValue"))
             case Some(baseValue) => Merge[V].merge(baseValue, otherValue).map(otherKey -> _)
           }
-          (merged |@| res.in(otherKey)).map { case (accMap, kv) => accMap  + kv }
+          (merged, res.in(otherKey)).mapN { case (accMap, kv) => accMap  + kv }
       }
     }
 
